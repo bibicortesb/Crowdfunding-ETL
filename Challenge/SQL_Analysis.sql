@@ -2,12 +2,10 @@
 -- 1. (2.5 pts)
 -- Retrieve all the number of backer_counts in descending order for each `cf_id` for the "live" campaigns. 
 SELECT cf_id,
-	(campaign.backers_count)
-FROM campaign
-WHERE campaign.outcome = 'live'
-ORDER BY campaign.backers_count Desc;
-
-
+	COUNT(backer_id) AS "backers_count"
+FROM backers
+GROUP BY cf_id
+ORDER BY "backers_count" Desc;
 
 
 -- 2. (2.5 pts)
@@ -22,16 +20,13 @@ ORDER BY "backers_count" Desc;
 -- 3. (5 pts)
 -- Create a table that has the first and last name, and email address of each contact.
 -- and the amount left to reach the goal for all "live" projects in descending order. 
-SELECT contacts.first_name,
-	contacts.last_name,
-	contacts.email,
-	(campaign.goal-campaign.pledged) AS remaining_amount
+SELECT c.first_name, c.last_name, c.email, ((ca.goal) - (ca.pledged)) AS "Remaining_Goal_Amount"
 INTO email_contacts_remaining_goal_amount
-FROM contacts 
-INNER JOIN campaign
-ON contacts.contact_id = campaign.contact_id
-WHERE campaign.outcome = 'live'
-ORDER BY remaining_amount DESC;
+FROM contacts as c
+INNER JOIN campaign as ca 
+ON c.contact_id = ca.contact_id
+Where outcome = 'live' 
+ORDER BY "Remaining_Goal_Amount" DESC
 
 
 -- Check the table
@@ -44,33 +39,15 @@ SELECT * FROM email_contacts_remaining_goal_amount;
 -- and has the first and last name of each backer, the cf_id, company name, description, 
 -- end date of the campaign, and the remaining amount of the campaign goal as "Left of Goal". 
 
-SELECT BK.email,
-       BK.first_name, 
-       BK.last_name, 
-       BK.cf_id, 
-       CP.company_name,
-       CP.description,
-       CP.end_date,
-       (CP.goal-CP.pledged) as "Left of Goal",
-	   CP.outcome
+SELECT b.email, b.first_name, b.last_name, b.cf_id, ca.company_name, ca.description, ca.end_date,
+((ca.goal) - (ca.pledged)) AS "Left of Goal"
 INTO email_backers_remaining_goal_amount
-FROM campaign as CP
-LEFT JOIN backers as BK
-ON CP.cf_id = BK.cf_id
-WHERE CP.outcome = 'live'
-GROUP BY BK.email,
-       BK.first_name, 
-       BK.last_name,
-       BK.cf_id, 
-       CP.company_name,
-       CP.description,
-       CP.end_date,
-       "Left of Goal",
-	   CP.outcome
-ORDER BY BK.last_name;
-
+FROM  campaign as ca  
+INNER JOIN backers as b 
+ON b.cf_id = ca.cf_id
+Where ca.outcome = 'live'
+ORDER BY b.last_name, b.first_name  ASC;
 
 -- Check the table
-
-SELECT * FROM email_backers_remaining_goal_amount
+select * from email_backers_remaining_goal_amount
 
